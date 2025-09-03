@@ -982,7 +982,7 @@ MonoBehaviour:
   pursuitTime: 10
   pursuitTimer: 0
   patrolSpeed: 5
-  patrolRadius: 20
+  patrolRadius: 60
   alertCheckInterval: 60
   alertCheckTimer: 0
   alertRotationSpeed: 70

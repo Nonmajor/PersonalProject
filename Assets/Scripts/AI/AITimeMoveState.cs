@@ -17,25 +17,29 @@ public class AITimedMoveState : AIState
 
         // 마지막으로 저장된 플레이어의 위치로 이동 목표를 설정
         stateMachine.controller.MoveTo(stateMachine.controller.lastKnownPlayerPosition);
-
     }
 
     
     public override void OnExit()
     {
-        Debug.Log("TimedMove 상태 종료");
     }
 
     
     public override void OnUpdate()
     {
 
-        // AI가 목표 지점에 거의 도달했으면 순찰 상태로 전환
+        // 1. 이동 중 플레이어를 감지하면 즉시 추격 상태로 전환
+        if (stateMachine.controller.IsPlayerInVision())
+        {
+            stateMachine.SwitchState(stateMachine.ChaseState);
+            return; // 상태 전환 후 추가 로직을 실행하지 않음
+        }
+
+        // 2. AI가 목표 지점에 거의 도달했으면 순찰 상태로 전환
         if (stateMachine.controller.agent.remainingDistance <= stateMachine.controller.agent.stoppingDistance)
         {
             stateMachine.SwitchState(stateMachine.PatrolState);
         }
-
     }
 
     
