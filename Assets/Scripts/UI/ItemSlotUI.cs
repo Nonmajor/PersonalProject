@@ -1,4 +1,3 @@
-// ItemSlotUI.cs
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,8 +7,11 @@ public class ItemSlotUI : MonoBehaviour
 {
     public Image[] slotBackgrounds; // 슬롯 배경 이미지 (항상 보임)
     public Image[] slotIcons; // 아이템 아이콘 이미지 (아이템 획득 시 표시)
-    public GameObject selectedSlotEffect;
     public TextMeshProUGUI keyCountText;
+
+    // 추가: 아이템 장착 시 반투명 이미지를 표시할 배열
+    [Header("Equip UI")]
+    public Image[] equipOverlays;
 
     void Start()
     {
@@ -20,10 +22,12 @@ public class ItemSlotUI : MonoBehaviour
             icon.color = new Color(1, 1, 1, 0);
         }
 
-        // 선택 슬롯 이펙트 숨기기
-        if (selectedSlotEffect != null)
+        
+
+        // 추가: 장착 오버레이도 시작 시 모두 비활성화
+        foreach (var overlay in equipOverlays)
         {
-            selectedSlotEffect.SetActive(false);
+            overlay.gameObject.SetActive(false);
         }
     }
 
@@ -51,10 +55,16 @@ public class ItemSlotUI : MonoBehaviour
 
     public void SelectSlot(int index)
     {
-        if (selectedSlotEffect != null)
+        // 모든 오버레이를 비활성화 (장착 해제 효과)
+        foreach (var overlay in equipOverlays)
         {
-            selectedSlotEffect.SetActive(true);
-            selectedSlotEffect.transform.position = slotIcons[index].transform.position;
+            overlay.gameObject.SetActive(false);
+        }
+
+        // 선택된 슬롯의 오버레이만 활성화
+        if (index >= 0 && index < equipOverlays.Length)
+        {
+            equipOverlays[index].gameObject.SetActive(true);
         }
     }
 
@@ -65,4 +75,5 @@ public class ItemSlotUI : MonoBehaviour
             keyCountText.text = $"{currentCount}/{maxCount}";
         }
     }
+
 }

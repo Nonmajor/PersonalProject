@@ -1,16 +1,16 @@
+using Player.State;
 using UnityEngine;
 
 // 걷기 상태
 public class PlayerWalkState : PlayerState
 {
-    
+
     public PlayerWalkState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
-    
+
     public override void OnEnter()
     {
         Debug.Log("Walk 상태 진입");
-
 
         // 플레이어의 이동 속도를 걷기 속도로 설정
         stateMachine.playerController.moveSpeed = stateMachine.playerController.walkSpeed;
@@ -20,16 +20,18 @@ public class PlayerWalkState : PlayerState
 
     }
 
-    
+
     public override void OnExit()
     {
         Debug.Log("Walk 상태 종료");
     }
 
-    
+
 
     public override void OnUpdate()
     {
+        // 걷기 상태에 머무는 동안 현재 속도 값을 계속 적용
+        stateMachine.playerController.moveSpeed = stateMachine.playerController.walkSpeed;
 
         // '달리기' 버튼을 누르고 있고 스테미나가 남아있으면
         if (stateMachine.playerController.isRunning && stateMachine.playerController.currentStamina > 0)
@@ -57,14 +59,11 @@ public class PlayerWalkState : PlayerState
         }
     }
 
-    
+
     public override void OnFixedUpdate()
     {
-        // 플레이어의 움직임(걷기)을 처리
+        // 플레이어의 움직임 처리
         stateMachine.playerController.HandleMovement();
-
-
-        // 스테미나를 재생하는 함수를 호출
         stateMachine.playerController.RegenerateStamina();
     }
 }

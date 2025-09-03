@@ -137,8 +137,13 @@ public class AIController : MonoBehaviour
         // 충돌한 오브젝트의 태그가 "Player"인지 확인
         if (other.CompareTag("Player"))
         {
-            // 플레이어와 충돌하면 Dead 상태로 전환
-            stateMachine.SwitchState(stateMachine.DeadState);
+            // GameManager의 Die() 함수를 직접 호출
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.Die();
+            }
+
+            
         }
     }
 

@@ -1,3 +1,4 @@
+using Player.State;
 using UnityEngine;
 
 // 달리기 상태
@@ -6,10 +7,10 @@ public class PlayerRunState : PlayerState
     // 생성자: 상태 머신 참조를 초기화
     public PlayerRunState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
-    
+
     public override void OnEnter()
     {
-        
+
         Debug.Log("Run 상태 진입");
 
         // 플레이어의 이동 속도를 달리기 속도로 설정
@@ -18,15 +19,21 @@ public class PlayerRunState : PlayerState
         stateMachine.playerController.staminaRegenCooldown = true;
     }
 
-    
+
     public override void OnExit()
     {
         Debug.Log("Run 상태 종료");
     }
 
-    
+
     public override void OnUpdate()
     {
+        // 달리기 상태에 머무는 동안 현재 속도 값을 계속 적용
+        stateMachine.playerController.moveSpeed = stateMachine.playerController.runSpeed;
+
+        // 스테미나 소모
+        stateMachine.playerController.UseStamina();
+
         // 현재 스테미나가 0 이하인지 확인
         if (stateMachine.playerController.currentStamina <= 0)
         {
@@ -64,12 +71,11 @@ public class PlayerRunState : PlayerState
         }
     }
 
-    // 일정한 주기로 호출(물리 계산에 적합)
+
     public override void OnFixedUpdate()
     {
-        // 플레이어의 움직임(달리기)을 처리
+        // 플레이어의 움직임 처리
         stateMachine.playerController.HandleMovement();
-        // 스테미나를 소모하는 함수를 호출
         stateMachine.playerController.UseStamina();
     }
 }

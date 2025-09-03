@@ -1,38 +1,30 @@
 using UnityEngine;
+using Player.State;
 
-// 아이템 사용
-public class PlayerUseItemState : PlayerState
+namespace Player.State
 {
-    
-    public PlayerUseItemState(PlayerStateMachine stateMachine) : base(stateMachine) { }
-
-    
-    public override void OnEnter()
+    // 아이템 사용
+    public class PlayerUseItemState : PlayerState
     {
-        
-        Debug.Log("UseItem 상태 진입");
-        // 아이템 사용과 관련된 실제 로직 구현 예정
-        // 예: 아이템 소모, 애니메이션 재생 등
-        Debug.Log("아이템 사용!");
-    }
+        public PlayerUseItemState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
-    
-    public override void OnExit()
-    {
-        Debug.Log("UseItem 상태 종료");
-    }
-
-   
-    public override void OnUpdate()
-    {
-        // 'isUsingItem' 변수가 false가 되면 (아이템 사용 버튼에서 손을 떼면)
-        if (!stateMachine.playerController.isUsingItem)
+        public override void OnEnter()
         {
-            // 'Idle' 상태로 전환하여 다음 행동을 준비
+            Debug.Log("UseItem 상태 진입");
+            Debug.Log("소모성 아이템 사용!");
+        }
+
+        public override void OnExit()
+        {
+            Debug.Log("UseItem 상태 종료");
+        }
+
+        public override void OnUpdate()
+        {
+            // 소모성 아이템은 한 번 사용 후 바로 Idle 상태로 돌아갑니다.
             stateMachine.SwitchState(stateMachine.IdleState);
         }
-    }
 
-    // 추후 수정 예정
-    public override void OnFixedUpdate() { }
+        public override void OnFixedUpdate() { }
+    }
 }
