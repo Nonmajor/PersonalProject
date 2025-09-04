@@ -1,5 +1,3 @@
-// BoosterData.cs
-
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Booster Data", menuName = "Item/Booster Data", order = 2)]

@@ -1,5 +1,3 @@
-// FlashlightData.cs
-
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "New Flashlight Data", menuName = "Item/Flashlight Data", order = 1)]

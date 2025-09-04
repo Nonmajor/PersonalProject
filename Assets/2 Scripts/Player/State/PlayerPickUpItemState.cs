@@ -37,7 +37,7 @@ namespace Player.State
             }
         }
 
-        // 추후 수정 예정
+        
         public override void OnFixedUpdate() { }
     }
 }

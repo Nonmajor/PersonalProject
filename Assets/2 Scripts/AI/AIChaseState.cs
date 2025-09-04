@@ -15,7 +15,7 @@ public class AIChaseState : AIState
         stateMachine.controller.pursuitTimer = 0f;
         stateMachine.controller.SetChaseAnimation();
 
-        // 수정된 부분: AudioManager.Instance가 null인지 확인
+        // AudioManager.Instance가 null인지 확인
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayChaseMusic();
@@ -25,7 +25,7 @@ public class AIChaseState : AIState
     public override void OnExit()
     {
         Debug.Log("Chase 상태 종료");
-        // 수정된 부분: AudioManager.Instance가 null인지 확인
+        // AudioManager.Instance가 null인지 확인
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.StopChaseMusic();

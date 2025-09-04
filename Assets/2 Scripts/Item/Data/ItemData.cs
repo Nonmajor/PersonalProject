@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Asset 메뉴에 생성 옵션을 추가합니다.
+// Asset 메뉴에 생성 옵션을 추가함
 [CreateAssetMenu(fileName = "New Item Data", menuName = "Item/Base Item Data", order = 0)]
 public class ItemData : ScriptableObject
 {

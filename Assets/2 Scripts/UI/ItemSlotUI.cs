@@ -9,7 +9,7 @@ public class ItemSlotUI : MonoBehaviour
     public Image[] slotIcons; // 아이템 아이콘 이미지 (아이템 획득 시 표시)
     public TextMeshProUGUI keyCountText;
 
-    // 추가: 아이템 장착 시 반투명 이미지를 표시할 배열
+    // 아이템 장착 시 반투명 이미지(착용 아이템 강조 효과)를 표시할 배열
     [Header("Equip UI")]
     public Image[] equipOverlays;
 

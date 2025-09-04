@@ -165,7 +165,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnUseItemPerformed(InputAction.CallbackContext context)
     {
-        // === 수정: 상태 전환 없이 바로 아이템 사용 로직 실행 ===
+        // 상태 전환 없이 바로 아이템 사용 로직 실행
         isUsingItem = true;
 
         if (isHoldingTool && flashlight != null)
@@ -237,7 +237,7 @@ public class PlayerController : MonoBehaviour
 
 
     // 기능 함수
-    // 플레이어 이동을 처리합니다.
+    // 플레이어 이동을 처리
     public void HandleMovement()
     {
         Vector3 forward = transform.forward;

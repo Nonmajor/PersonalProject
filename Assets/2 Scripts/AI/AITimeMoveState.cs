@@ -15,7 +15,7 @@ public class AITimeMoveState : AIState
         timer = moveDuration;
         stateMachine.controller.agent.isStopped = false;
 
-        //  수정된 부분: lastKnownPlayerPosition을 사용하여 목표 지점 설정
+        // lastKnownPlayerPosition을 사용하여 목표 지점 설정
         if (stateMachine.controller.lastKnownPlayerPosition != Vector3.zero)
         {
             stateMachine.controller.MoveTo(stateMachine.controller.lastKnownPlayerPosition);

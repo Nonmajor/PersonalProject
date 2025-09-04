@@ -47,10 +47,6 @@ namespace Player.State
 
 
 
-
-
-
-
         public override void OnFixedUpdate()
         {
             // 플레이어의 움직임 처리 (감속된 속도로 이동)

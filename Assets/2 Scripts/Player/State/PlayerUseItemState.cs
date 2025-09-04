@@ -21,7 +21,7 @@ namespace Player.State
 
         public override void OnUpdate()
         {
-            // 소모성 아이템은 한 번 사용 후 바로 Idle 상태로 돌아갑니다.
+            // 소모성 아이템은 한 번 사용 후 바로 Idle 상태로 돌아감
             stateMachine.SwitchState(stateMachine.IdleState);
         }
 

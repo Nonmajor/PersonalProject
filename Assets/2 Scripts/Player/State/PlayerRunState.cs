@@ -9,7 +9,7 @@ namespace Player.State
     {
         public PlayerRunState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
-        // === 추가: 발소리 재생 코루틴 ===
+        // 발소리 재생 코루틴
         private IEnumerator PlayFootstepSounds(float interval)
         {
             while (true)
@@ -26,6 +26,7 @@ namespace Player.State
         {
             Debug.Log("Run 상태 진입");
             stateMachine.playerController.moveSpeed = stateMachine.playerController.runSpeed;
+
             // 발소리 재생 코루틴 시작
             stateMachine.playerController.StartCoroutine(PlayFootstepSounds(stateMachine.playerController.runFootstepInterval));
         }
@@ -72,6 +73,7 @@ namespace Player.State
         public override void OnExit()
         {
             Debug.Log("Run 상태 종료");
+
             // 발소리 코루틴 정지
             stateMachine.playerController.StopAllCoroutines();
         }
