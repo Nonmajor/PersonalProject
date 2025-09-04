@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 public class AudioManager : MonoBehaviour
 {
@@ -13,10 +14,9 @@ public class AudioManager : MonoBehaviour
     public AudioSource ingameMusicSource;
     public AudioSource chaseMusicSource;
 
-    // === 추가: 효과음(SFX)을 위한 오디오 소스 ===
+    // === 효과음(SFX)을 위한 오디오 소스 ===
     [Header("SFX")]
     public AudioSource flashlightSoundSource;
-    // === 발소리용 AudioSource 변수 추가 ===
     public AudioSource footstepSoundSource;
 
     // 각 오디오 소스의 원래 볼륨을 저장할 변수
@@ -36,9 +36,14 @@ public class AudioManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        // 원래 볼륨 값 저장
-        ingameMusicOriginalVolume = ingameMusicSource.volume;
-        chaseMusicOriginalVolume = chaseMusicSource.volume;
+        if (ingameMusicSource != null)
+        {
+            ingameMusicOriginalVolume = ingameMusicSource.volume;
+        }
+        if (chaseMusicSource != null)
+        {
+            chaseMusicOriginalVolume = chaseMusicSource.volume;
+        }
     }
 
     private void OnDestroy()
@@ -56,23 +61,34 @@ public class AudioManager : MonoBehaviour
         {
             PlayIngameMusic();
         }
+        else
+        {
+            StopAllMusic();
+        }
     }
 
-    // === 사운드 재생 및 정지 함수 ===
-
-    public void PlayMainMusic()
+    // 모든 음악을 정지
+    private void StopAllMusic()
     {
+        if (mainMusicSource != null) mainMusicSource.Stop();
         if (ingameMusicSource != null) ingameMusicSource.Stop();
         if (chaseMusicSource != null) chaseMusicSource.Stop();
-        if (mainMusicSource != null && !mainMusicSource.isPlaying)
+    }
+
+    // 메인 메뉴 음악 재생
+    public void PlayMainMusic()
+    {
+        StopAllMusic();
+        if (mainMusicSource != null)
         {
             mainMusicSource.Play();
         }
     }
 
+    // 인게임 음악 재생
     public void PlayIngameMusic()
     {
-        if (mainMusicSource != null) mainMusicSource.Stop();
+        StopAllMusic();
         if (ingameMusicSource != null && !ingameMusicSource.isPlaying)
         {
             ingameMusicSource.Play();
@@ -81,7 +97,7 @@ public class AudioManager : MonoBehaviour
 
     public void PlayChaseMusic()
     {
-        if (ingameMusicSource != null) ingameMusicSource.Stop();
+        if (ingameMusicSource != null && ingameMusicSource.isPlaying) ingameMusicSource.Stop();
         if (chaseMusicSource != null && !chaseMusicSource.isPlaying)
         {
             chaseMusicSource.Play();
@@ -102,13 +118,33 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    
+    // === 발소리 재생 및 정지 함수 ===
     public void PlayFootstepSound()
     {
         if (footstepSoundSource != null && footstepSoundSource.clip != null)
         {
             footstepSoundSource.PlayOneShot(footstepSoundSource.clip);
         }
+    }
+
+    // === 모든 음악 및 효과음을 일시 정지하는 함수 ===
+    public void PauseAllAudio()
+    {
+        if (mainMusicSource != null && mainMusicSource.isPlaying) mainMusicSource.Pause();
+        if (ingameMusicSource != null && ingameMusicSource.isPlaying) ingameMusicSource.Pause();
+        if (chaseMusicSource != null && chaseMusicSource.isPlaying) chaseMusicSource.Pause();
+        if (flashlightSoundSource != null && flashlightSoundSource.isPlaying) flashlightSoundSource.Pause();
+        if (footstepSoundSource != null && footstepSoundSource.isPlaying) footstepSoundSource.Pause();
+    }
+
+    // === 일시 정지된 모든 음악 및 효과음을 다시 재생하는 함수 ===
+    public void ResumeAllAudio()
+    {
+        if (mainMusicSource != null) mainMusicSource.UnPause();
+        if (ingameMusicSource != null) ingameMusicSource.UnPause();
+        if (chaseMusicSource != null) chaseMusicSource.UnPause();
+        if (flashlightSoundSource != null) flashlightSoundSource.UnPause();
+        if (footstepSoundSource != null) footstepSoundSource.UnPause();
     }
 
     // === 코루틴 ===
@@ -133,6 +169,6 @@ public class AudioManager : MonoBehaviour
             yield return null;
         }
         audioSource.Stop();
-        audioSource.volume = startVolume; // 볼륨을 원래대로 되돌려 다음 재생에 대비
+        audioSource.volume = startVolume; // 원래 볼륨으로 되돌림
     }
 }
