@@ -65,6 +65,14 @@ public class GameManager : MonoBehaviour
             {
                 OnBackButton();
             }
+            else if (videoUI != null && videoUI.activeSelf)
+            {
+                OnSettingsSubMenuBackButton();
+            }
+            else if (soundUI != null && soundUI.activeSelf)
+            {
+                OnSettingsSubMenuBackButton();
+            }
             else if (pauseUI != null && pauseUI.activeSelf)
             {
                 TogglePause();
@@ -193,5 +201,33 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void OnRetryButton()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    // === 해상도 변경 기능 ===
+    public void SetResolution2560x1440()
+    {
+        Screen.SetResolution(2560, 1440, Screen.fullScreen);
+    }
+
+    public void SetResolution1920x1080()
+    {
+        Screen.SetResolution(1920, 1080, Screen.fullScreen);
+    }
+
+    public void SetResolution1280x720()
+    {
+        Screen.SetResolution(1280, 720, Screen.fullScreen);
+    }
+
+    // === 전체화면/창모드 토글 기능 ===
+    public void ToggleFullscreen()
+    {
+        Screen.fullScreen = !Screen.fullScreen;
     }
 }
