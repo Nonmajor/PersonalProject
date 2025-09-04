@@ -9,23 +9,28 @@ public class GameManager : MonoBehaviour
     [Header("Key Spawn Settings")]
     public GameObject keyPrefab;
     public Transform[] keySpawnPoints;
-
     public int KEYS_TO_SPAWN = 5;
 
     // === UI 관련 변수 ===
     [Header("UI")]
     public GameObject victoryUI;
     public GameObject deadUI;
+    public GameObject pauseUI; // 추가: 일시정지 UI
 
     // === 게임 상태 변수 ===
     [Header("Game State")]
     public static bool isGameOver = false;
     public int keysCollected = 0;
 
+    // 추가: 일시정지 상태를 확인하는 변수
+    private bool isPaused = false;
+
+    // 이 스크립트의 싱글톤 인스턴스
     public static GameManager Instance;
 
     private void Awake()
     {
+        // GameManager의 싱글톤 인스턴스 설정
         if (Instance == null)
         {
             Instance = this;
@@ -35,16 +40,28 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
 
+        // 게임 시작 시 초기 상태 설정
         isGameOver = false;
+        isPaused = false; // 추가
         Time.timeScale = 1f;
         victoryUI.SetActive(false);
         deadUI.SetActive(false);
-
-        // 게임 시작 시 마우스 커서를 숨기고 잠금
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
+        if (pauseUI != null) // 추가: 일시정지 UI도 비활성화
+        {
+            pauseUI.SetActive(false);
+        }
 
         StartGame();
+    }
+
+    // 추가: ESC 키 입력을 확인하는 Update 함수
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (isGameOver) return;
+            TogglePause();
+        }
     }
 
     public void StartGame()
@@ -95,7 +112,7 @@ public class GameManager : MonoBehaviour
         deadUI.SetActive(true);
         Debug.Log("게임 오버! AI에게 잡혔습니다.");
 
-        // 이 두 줄을 추가하여 게임 오버 시 마우스 커서를 보이게 합니다.
+        // 추가: 마우스 커서를 보이게 하고 고정을 해제합니다.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
@@ -109,30 +126,56 @@ public class GameManager : MonoBehaviour
         victoryUI.SetActive(true);
         Debug.Log("축하합니다! 열쇠를 모두 모아 게임에서 승리했습니다!");
 
-        // 승리 시 마우스 커서 보이게 하고 잠금 해제
+        // 추가: 마우스 커서를 보이게 하고 고정을 해제합니다.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
 
+    // === 추가: 일시정지 관련 함수 ===
+    public void TogglePause()
+    {
+        isPaused = !isPaused;
+        if (isPaused)
+        {
+            Time.timeScale = 0f;
+            pauseUI.SetActive(true);
+            // 마우스 커서를 보이게 합니다.
+            Cursor.visible = true;
+            // 마우스 커서를 게임 뷰 밖으로 나가지 못하게 고정하지 않습니다.
+            Cursor.lockState = CursorLockMode.None;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            pauseUI.SetActive(false);
+            // 마우스 커서를 숨깁니다.
+            Cursor.visible = false;
+            // 마우스 커서를 게임 뷰 중앙에 고정합니다.
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+    }
+
+    public void OnResumeButton()
+    {
+        TogglePause();
+    }
+
+    public void OnSettingsButton()
+    {
+
+        Debug.Log("설정 UI로 이동");
+    }
+
+    // === 기존 함수 ===
     public void OnReturnButton()
     {
         Time.timeScale = 1f;
-
-        // 씬 전환 시 마우스 커서 상태 재설정
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
         SceneManager.LoadScene("MainMenu");
     }
 
     public void OnRetryButton()
     {
         Time.timeScale = 1f;
-
-        // 게임 재시작 시 마우스 커서 상태 재설정 (다시 숨기기)
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

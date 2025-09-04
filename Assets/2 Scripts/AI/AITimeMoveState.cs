@@ -2,24 +2,33 @@ using UnityEngine;
 using UnityEngine.AI;
 
 // AI가 특정 목표 지점(플레이어의 마지막 위치)으로 이동하는 상태
-public class AITimedMoveState : AIState
+public class AITimeMoveState : AIState
 {
-    public AITimedMoveState(AIStateMachine stateMachine) : base(stateMachine) { }
+    private float moveDuration = 10f;
+    private float timer;
 
-    
+    public AITimeMoveState(AIStateMachine stateMachine) : base(stateMachine) { }
+
     public override void OnEnter()
     {
+        Debug.Log("TimeMove 상태 진입");
+        timer = moveDuration;
+        stateMachine.controller.agent.isStopped = false;
 
-        Debug.Log("TimedMove 상태 진입: 플레이어 마지막 위치로 이동");
+        //  수정된 부분: lastKnownPlayerPosition을 사용하여 목표 지점 설정
+        if (stateMachine.controller.lastKnownPlayerPosition != Vector3.zero)
+        {
+            stateMachine.controller.MoveTo(stateMachine.controller.lastKnownPlayerPosition);
+        }
+        else
+        {
+            // lastKnownPlayerPosition이 설정되지 않았을 경우, 현재 위치에서 임의의 위치로 이동
+            stateMachine.controller.MoveTo(stateMachine.controller.transform.position);
+        }
 
-        // 이동 속도를 순찰 속도로 설정
-        stateMachine.controller.agent.speed = stateMachine.controller.patrolSpeed;
-
-        // 마지막으로 저장된 플레이어의 위치로 이동 목표를 설정
-        stateMachine.controller.MoveTo(stateMachine.controller.lastKnownPlayerPosition);
     }
 
-    
+
     public override void OnExit()
     {
     }

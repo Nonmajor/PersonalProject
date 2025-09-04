@@ -2,10 +2,22 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using System.Collections;
+using Player.State;
 
 // 플레이어의 이동, 조작, 스테미나, 부스터, 카메라 등을 총괄
 public class PlayerController : MonoBehaviour
 {
+
+    // 손전등 스크립트 참조 변수
+    [Header("Item")]
+    public FlashlightHandler flashlight;
+
+    // === 추가: 발소리 관련 변수 ===
+    [Header("Footsteps")]
+    public float walkFootstepInterval = 0.5f; // 걷기 발소리 재생 간격 (초)
+    public float runFootstepInterval = 0.3f; // 달리기 발소리 재생 간격 (초)
+    [HideInInspector] public bool canPlayFootstep = true; // 발소리 재생 가능 여부
+    // ===
 
     // 컴포넌트 및 참조 변수
     private PlayerControls playerControls; // 유니티 Input System을 통한 플레이어 입력 제어
@@ -153,11 +165,18 @@ public class PlayerController : MonoBehaviour
 
     public void OnUseItemPerformed(InputAction.CallbackContext context)
     {
+        // === 수정: 상태 전환 없이 바로 아이템 사용 로직 실행 ===
         isUsingItem = true;
+
+        if (isHoldingTool && flashlight != null)
+        {
+            flashlight.Use();
+        }
     }
 
     public void OnUseItemCanceled(InputAction.CallbackContext context)
     {
+        // 아이템 사용 상태 변수만 업데이트
         isUsingItem = false;
     }
 
@@ -299,8 +318,6 @@ public class PlayerController : MonoBehaviour
     // 스테미나를 재생하는 함수
     public void RegenerateStamina()
     {
-        Debug.Log("RegenerateStamina() 함수 호출됨");
-
         // 쿨다운 상태가 아니고, 스테미나가 최대치보다 적을 경우에만 재생
         if (!staminaRegenCooldown && currentStamina < maxStamina)
         {

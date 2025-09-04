@@ -13,19 +13,35 @@ public class AIChaseState : AIState
         Debug.Log("Chase 상태 진입");
         stateMachine.controller.agent.speed = stateMachine.controller.chaseSpeed;
         stateMachine.controller.pursuitTimer = 0f;
-        stateMachine.controller.SetChaseAnimation(); // 수정된 부분
+        stateMachine.controller.SetChaseAnimation();
+
+        // 수정된 부분: AudioManager.Instance가 null인지 확인
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayChaseMusic();
+        }
     }
 
     public override void OnExit()
     {
         Debug.Log("Chase 상태 종료");
+        // 수정된 부분: AudioManager.Instance가 null인지 확인
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopChaseMusic();
+        }
     }
 
-    
+
     public override void OnUpdate()
     {
         // 플레이어의 현재 위치로 이동 목표를 계속 업데이트.
-        stateMachine.controller.MoveTo(stateMachine.controller.player.position);
+        
+        if (stateMachine.controller.playerTransform != null)
+        {
+            stateMachine.controller.MoveTo(stateMachine.controller.playerTransform.position);
+        }
+
 
         // 플레이어가 시야 범위 내에 있는지 확인
         if (stateMachine.controller.IsPlayerInVision())
@@ -47,6 +63,5 @@ public class AIChaseState : AIState
         }
     }
 
-    // 물리 업데이트는 NavMeshAgent에서 처리하므로 공백
     public override void OnFixedUpdate() { }
 }

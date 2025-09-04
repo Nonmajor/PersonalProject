@@ -1,81 +1,79 @@
-using Player.State;
 using UnityEngine;
+using System.Collections;
+using Player.State;
 
-// 달리기 상태
-public class PlayerRunState : PlayerState
+namespace Player.State
 {
-    // 생성자: 상태 머신 참조를 초기화
-    public PlayerRunState(PlayerStateMachine stateMachine) : base(stateMachine) { }
-
-
-    public override void OnEnter()
+    // 플레이어가 달리고 있는 상태
+    public class PlayerRunState : PlayerState
     {
+        public PlayerRunState(PlayerStateMachine stateMachine) : base(stateMachine) { }
 
-        Debug.Log("Run 상태 진입");
-
-        // 플레이어의 이동 속도를 달리기 속도로 설정
-        stateMachine.playerController.moveSpeed = stateMachine.playerController.runSpeed;
-        // 스테미나 재생 쿨다운을 활성화하여 스테미나가 재생되지 않도록 설정
-        stateMachine.playerController.staminaRegenCooldown = true;
-    }
-
-
-    public override void OnExit()
-    {
-        Debug.Log("Run 상태 종료");
-    }
-
-
-    public override void OnUpdate()
-    {
-        // 달리기 상태에 머무는 동안 현재 속도 값을 계속 적용
-        stateMachine.playerController.moveSpeed = stateMachine.playerController.runSpeed;
-
-        // 스테미나 소모
-        stateMachine.playerController.UseStamina();
-
-        // 현재 스테미나가 0 이하인지 확인
-        if (stateMachine.playerController.currentStamina <= 0)
+        // === 추가: 발소리 재생 코루틴 ===
+        private IEnumerator PlayFootstepSounds(float interval)
         {
-            // 스테미나가 고갈되면 즉시 'Exhausted(탈진)' 상태로 전환
-            stateMachine.SwitchState(stateMachine.ExhaustedState);
-            return;
+            while (true)
+            {
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayFootstepSound();
+                }
+                yield return new WaitForSeconds(interval);
+            }
         }
 
-        // '달리기' 버튼을 놓았거나, 이동 입력(WASD)이 없으면
-        if (!stateMachine.playerController.isRunning || stateMachine.playerController.moveInput.magnitude == 0)
+        public override void OnEnter()
         {
-            // 이동 입력이 있으면 'Walk(걷기)' 상태로 전환
-            if (stateMachine.playerController.moveInput.magnitude > 0)
+            Debug.Log("Run 상태 진입");
+            stateMachine.playerController.moveSpeed = stateMachine.playerController.runSpeed;
+            // 발소리 재생 코루틴 시작
+            stateMachine.playerController.StartCoroutine(PlayFootstepSounds(stateMachine.playerController.runFootstepInterval));
+        }
+
+        public override void OnUpdate()
+        {
+            // 움직임 입력이 없거나 달리기 버튼이 해제되면 Walk 또는 Idle 상태로 전환
+            if (stateMachine.playerController.moveInput == Vector2.zero)
+            {
+                stateMachine.SwitchState(stateMachine.IdleState);
+                return;
+            }
+
+            if (!stateMachine.playerController.isRunning)
             {
                 stateMachine.SwitchState(stateMachine.WalkState);
+                return;
             }
-            else
+
+            // 스테미나를 계속 소모
+            stateMachine.playerController.UseStamina();
+
+            // 스테미나가 0이 되면 탈진 상태로 전환
+            if (stateMachine.playerController.currentStamina <= 0)
             {
-                // 이동 입력이 없으면 'Idle(대기)' 상태로 전환
-                stateMachine.SwitchState(stateMachine.IdleState);
+                stateMachine.playerController.staminaRegenCooldown = true;
+                stateMachine.SwitchState(stateMachine.ExhaustedState);
+                return;
+            }
+
+            // 아이템 줍기 시 PickUpItem 상태로 전환
+            if (stateMachine.playerController.isPickingUpItem)
+            {
+                stateMachine.SwitchState(stateMachine.PickUpItemState);
+                return;
             }
         }
 
-        // '달리기' 중에도 아이템 사용 입력이 감지되면
-        else if (stateMachine.playerController.isUsingItem)
+        public override void OnFixedUpdate()
         {
-            // 'UseItem' 상태로 전환
-            stateMachine.SwitchState(stateMachine.UseItemState);
+            stateMachine.playerController.HandleMovement();
         }
-        // '달리기' 중에도 아이템 획득 입력이 감지되면
-        else if (stateMachine.playerController.isPickingUpItem)
+
+        public override void OnExit()
         {
-            // 'PickUpItem' 상태로 전환
-            stateMachine.SwitchState(stateMachine.PickUpItemState);
+            Debug.Log("Run 상태 종료");
+            // 발소리 코루틴 정지
+            stateMachine.playerController.StopAllCoroutines();
         }
-    }
-
-
-    public override void OnFixedUpdate()
-    {
-        // 플레이어의 움직임 처리
-        stateMachine.playerController.HandleMovement();
-        stateMachine.playerController.UseStamina();
     }
 }

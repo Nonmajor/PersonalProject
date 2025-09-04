@@ -11,8 +11,8 @@ public class AIStateMachine : MonoBehaviour
     public AIPatrolState PatrolState;
     public AIChaseState ChaseState;
     public AIAlertState AlertState;
-    public AITimedMoveState TimedMoveState;
-    
+    public AIState TimedMoveState;
+
 
     // AI의 기능과 데이터를 담고 있는 컨트롤러에 대한 참조
     [HideInInspector] public AIController controller;
@@ -28,8 +28,8 @@ public class AIStateMachine : MonoBehaviour
         PatrolState = new AIPatrolState(this);
         ChaseState = new AIChaseState(this);
         AlertState = new AIAlertState(this);
-        TimedMoveState = new AITimedMoveState(this);
-        
+        TimedMoveState = new AITimeMoveState(this);
+
     }
 
     

@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections.Generic;
 
 // AI의 기능(이동, 감지, 상태 변수 등)을 제어하는 스크립트
 // AI의 상태 머신이 사용하는 모든 데이터를 관리
@@ -10,6 +11,11 @@ public class AIController : MonoBehaviour
     // 컴포넌트 및 변수
     [HideInInspector] public AIStateMachine stateMachine;
     [HideInInspector] public NavMeshAgent agent;
+    [HideInInspector] public Animator animator;
+    [HideInInspector] public Transform playerTransform; // 플레이어의 Transform
+
+    // AI가 플레이어를 마지막으로 본 위치를 저장
+    [HideInInspector] public Vector3 lastKnownPlayerPosition;
 
 
     [Header("Vision")]
@@ -24,133 +30,144 @@ public class AIController : MonoBehaviour
     public float patrolRadius = 20f; // 순찰할 수 있는 최대 반경
     public float alertCheckInterval = 10f; // 경계 상태로 전환할 주기
     public float alertCheckTimer; // 경계 상태 전환 주기를 측정하는 타이머
+    public float patrolAnimSpeed = 1f; // 순찰 애니메이션 속도
 
 
     [Header("Alert")]
     public float alertRotationSpeed = 30f; // 경계 상태에서 회전하는 속도
     public float alertDuration = 5f; // 경계 상태를 유지하는 시간
+    public float alertAnimSpeed = 0.5f; // 경계 애니메이션 속도
 
 
     [Header("Chase")]
-    public float chaseSpeed = 7f; // 추격 상태의 이동 속도
+    public float chaseSpeed = 5f; // 추격 상태의 이동 속도
+    public float chaseAnimSpeed = 1.5f; // 추격 애니메이션 속도
 
 
-    [Header("Timed Location Sync")]
-    public float syncPlayerLocationInterval = 60f; // 1분마다 위치를 동기화할 주기
-    public Vector3 lastKnownPlayerPosition; // 마지막으로 저장된 플레이어의 위치
+    [Header("Move")]
+    public float moveSpeed = 4f; // 이동 상태의 이동 속도
 
 
-    [Header("Animation")]
-    public Animator animator;
-
-
-
-    // 참조 변수
-    public Transform player; // 플레이어 오브젝트에 대한 참조
-    public GameObject deadUI; // 게임 오버 UI에 대한 참조
-
-
-
-    
     private void Awake()
     {
-        stateMachine = GetComponent<AIStateMachine>();
+        // 수정된 부분: Awake()에서 필수 컴포넌트들을 가져와 변수에 할당
         agent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
 
-        // "Player" 태그를 가진 오브젝트를 찾아 참조
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        // 'Player' 태그를 가진 게임 오브젝트를 찾아 Transform을 할당
+        GameObject playerObject = GameObject.FindWithTag("Player");
         if (playerObject != null)
         {
-            player = playerObject.transform;
-        }
-        else
-        {
-            Debug.LogWarning("'Player' 태그를 가진 오브젝트를 찾을 수 없습니다.");
+            playerTransform = playerObject.transform;
         }
 
-        // 타이머 초기화
+        // 컴포넌트가 할당되었는지 확인 후 속도 설정
+        if (agent != null)
+        {
+            agent.speed = patrolSpeed;
+        }
+
         alertCheckTimer = alertCheckInterval;
-        animator = GetComponent<Animator>();
     }
 
-    
-    private void Start()
-    {
-        // 1분마다 플레이어 위치를 동기화하는 코루틴 시작
-        StartCoroutine(SyncPlayerLocationRoutine());
-    }
 
-    
-    
-
-    // 1분마다 플레이어의 위치를 동기화하는 코루틴
-    private IEnumerator SyncPlayerLocationRoutine()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(syncPlayerLocationInterval);
-
-            // 현재 상태가 순찰(Patrol) 또는 경계(Alert) 상태일 때만 위치를 동기화
-            // 이미 플레이어를 추격하거나 데드 상태일 때는 건너뜀
-            if (stateMachine.currentState == stateMachine.PatrolState ||
-                stateMachine.currentState == stateMachine.AlertState)
-            {
-                lastKnownPlayerPosition = player.position;
-                stateMachine.SwitchState(stateMachine.TimedMoveState);
-            }
-        }
-    }
-
-    
-    // 플레이어가 AI의 시야 범위에 있는지 확인하는 함수
+    // 플레이어가 시야 범위 내에 있는지 확인하는 함수
     public bool IsPlayerInVision()
     {
-        if (player == null) return false;
-
-        Vector3 directionToPlayer = player.position - transform.position;
-        float distance = directionToPlayer.magnitude;
-        float angle = Vector3.Angle(transform.forward, directionToPlayer);
-
-        // 거리가 시야 범위 내이고, 각도가 시야각 내에 있으면 true를 반환
-        if (distance <= visionRange && angle <= visionAngle / 2f)
+        // 플레이어 트랜스폼이 할당되지 않았으면 false 반환
+        if (playerTransform == null)
         {
-            // Raycast를 사용하여 시야를 가로막는 장애물이 있는지 확인
-            if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, distance))
+            return false;
+        }
+
+        Vector3 directionToPlayer = playerTransform.position - transform.position;
+        float distanceToPlayer = directionToPlayer.magnitude;
+
+        // 거리가 시야 범위 내에 있는지 확인
+        if (distanceToPlayer <= visionRange)
+        {
+            // 시야각 내에 있는지 확인
+            float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
+            if (angleToPlayer <= visionAngle / 2)
             {
-                if (hit.collider.CompareTag("Player"))
+                // 장애물로 가려져 있는지 Raycast를 통해 확인
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, directionToPlayer, out hit, visionRange))
                 {
-                    return true;
+                    if (hit.collider.CompareTag("Player"))
+                    {
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    // AI를 특정 목표 지점으로 이동시키는 함수
-    public void MoveTo(Vector3 targetPosition)
+    private void OnTriggerEnter(Collider other)
     {
-        // NavMeshAgent가 활성화된 경우에만 목적지를 설정
-        if (agent != null && agent.isActiveAndEnabled)
-        {
-            agent.SetDestination(targetPosition);
-        }
-    }
+        // 게임오버 상태가 아닐 때만 실행
+        if (GameManager.isGameOver) return;
 
-    // AI가 다른 오브젝트와 충돌했을 때 호출되는 함수 (Is Trigger가 활성화된 콜라이더)
-    void OnTriggerEnter(Collider other)
-    {
         // 충돌한 오브젝트의 태그가 "Player"인지 확인
         if (other.CompareTag("Player"))
         {
-            // GameManager의 Die() 함수를 직접 호출
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.Die();
-            }
-
-            
+            Debug.Log("AI가 플레이어와 충돌했습니다. 게임 오버!");
+            // GameManager 싱글톤 인스턴스를 통해 DieGame() 메서드 호출
+            GameManager.Instance.Die();
         }
     }
+
+    // AI가 특정 목표 지점으로 이동하도록 하는 함수
+    public void MoveTo(Vector3 destination)
+    {
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            agent.SetDestination(destination);
+        }
+    }
+
+
+    public void ResetAllAnimationBools()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsPatrolling", false);
+            animator.SetBool("IsAlert", false);
+            animator.SetBool("IsChasing", false);
+        }
+    }
+
+    public void SetPatrolAnimation()
+    {
+        ResetAllAnimationBools();
+        if (animator != null)
+        {
+            animator.SetBool("IsPatrolling", true);
+            animator.speed = patrolAnimSpeed; // 애니메이션 속도 조절
+        }
+    }
+
+    public void SetAlertAnimation()
+    {
+        ResetAllAnimationBools();
+        if (animator != null)
+        {
+            animator.SetBool("IsAlert", true);
+            animator.speed = alertAnimSpeed; // 애니메이션 속도 조절
+        }
+    }
+
+    public void SetChaseAnimation()
+    {
+        ResetAllAnimationBools();
+        if (animator != null)
+        {
+            animator.SetBool("IsChasing", true);
+            animator.speed = chaseAnimSpeed; // 애니메이션 속도 조절
+        }
+    }
+
 
     // AI의 시야 범위를 씬 뷰에서 시각적으로 보여주는 디버깅 함수
     private void OnDrawGizmos()
@@ -167,40 +184,5 @@ public class AIController : MonoBehaviour
 
         Gizmos.DrawRay(transform.position, leftDirection * visionRange);
         Gizmos.DrawRay(transform.position, rightDirection * visionRange);
-    }
-
-    private void ResetAllAnimationBools()
-    {
-        // 모든 bool 파라미터를 false로 초기화
-        animator.SetBool("IsPatrolling", false);
-        animator.SetBool("IsAlert", false);
-        animator.SetBool("IsChasing", false);
-    }
-
-    public void SetPatrolAnimation()
-    {
-        ResetAllAnimationBools();
-        if (animator != null)
-        {
-            animator.SetBool("IsPatrolling", true);
-        }
-    }
-
-    public void SetAlertAnimation()
-    {
-        ResetAllAnimationBools();
-        if (animator != null)
-        {
-            animator.SetBool("IsAlert", true);
-        }
-    }
-
-    public void SetChaseAnimation()
-    {
-        ResetAllAnimationBools();
-        if (animator != null)
-        {
-            animator.SetBool("IsChasing", true);
-        }
     }
 }

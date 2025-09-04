@@ -28,24 +28,25 @@ namespace Player.State
             Debug.Log("Idle 상태 종료");
         }
 
-        
+
         public override void OnUpdate()
         {
-            // 플레이어의 이동 입력이 감지되면
-            if (stateMachine.playerController.moveInput.magnitude > 0)
+            // 움직임 입력이 있으면 Walk 상태로 전환
+            if (stateMachine.playerController.moveInput != Vector2.zero)
             {
-                // '걷기' 상태로 전환
                 stateMachine.SwitchState(stateMachine.WalkState);
+                return;
             }
-            // 플레이어가 아이템을 줍는 중이라면
-            else if (stateMachine.playerController.isPickingUpItem)
+
+            // 아이템 줍기 시 PickUpItem 상태로 전환
+            if (stateMachine.playerController.isPickingUpItem)
             {
-                // '아이템 줍기' 상태로 전환
                 stateMachine.SwitchState(stateMachine.PickUpItemState);
+                return;
             }
         }
 
-        
+
         public override void OnFixedUpdate()
         {
             // 스테미나를 재생

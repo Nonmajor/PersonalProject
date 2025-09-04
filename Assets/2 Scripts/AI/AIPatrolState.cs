@@ -17,7 +17,7 @@ public class AIPatrolState : AIState
     public AIPatrolState(AIStateMachine stateMachine) : base(stateMachine) { }
 
 
-    // AIPatrolState.cs
+    
     public override void OnEnter()
     {
         Debug.Log("Patrol 상태 진입");
@@ -37,10 +37,13 @@ public class AIPatrolState : AIState
     {
 
         // 1. 순찰 중 플레이어를 감지하면 Chase 상태로 전환
+        // 플레이어가 시야 범위 내에 들어왔는지 확인
         if (stateMachine.controller.IsPlayerInVision())
         {
+            // ⭐ 추가된 부분: 플레이어를 마지막으로 본 위치를 저장
+            stateMachine.controller.lastKnownPlayerPosition = stateMachine.controller.playerTransform.position;
             stateMachine.SwitchState(stateMachine.ChaseState);
-            return; // 상태가 전환 시 로직 종료
+            return;
         }
 
         // 2. 정기적으로 경계 상태로 전환

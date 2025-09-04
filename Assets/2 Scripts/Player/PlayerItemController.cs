@@ -34,7 +34,7 @@ public class PlayerItemController : MonoBehaviour
     private PlayerController playerController; // 플레이어의 상태를 제어하는 스크립트
     private GameManager gameManager; // 게임 상태를 관리하는 싱글톤 인스턴스
 
-   
+
 
     void Awake()
     {
@@ -94,7 +94,7 @@ public class PlayerItemController : MonoBehaviour
         }
     }
 
-    
+
     void Update()
     {
         // 매 프레임 상호작용 텍스트를 초기화
@@ -141,7 +141,7 @@ public class PlayerItemController : MonoBehaviour
         {
             if (gameManager != null && !GameManager.isGameOver)
             {
-                gameManager.IncrementKeysCollected();
+                GameManager.Instance.IncrementKeysCollected();
                 // 수정: UI 업데이트 시 열쇠의 현재 개수와 총 개수를 함께 전달
                 itemSlotUI.UpdateKeyCount(gameManager.keysCollected, gameManager.KEYS_TO_SPAWN);
                 Destroy(itemToPickup.gameObject);

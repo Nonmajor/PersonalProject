@@ -27,5 +27,11 @@ public class FlashlightHandler : MonoBehaviour
         {
             lightSource.enabled = isOn;
         }
+
+        // === 추가: 손전등 사용 시 사운드 재생 ===
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayFlashlightSound();
+        }
     }
 }
