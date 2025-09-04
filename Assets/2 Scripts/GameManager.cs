@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.EventSystems;
 
 public class GameManager : MonoBehaviour
 {
@@ -17,6 +16,9 @@ public class GameManager : MonoBehaviour
     public GameObject victoryUI;
     public GameObject deadUI;
     public GameObject pauseUI;
+    public GameObject inGameSettingsUI;
+    public GameObject videoUI;
+    public GameObject soundUI;
 
     // === 게임 상태 변수 ===
     [Header("Game State")]
@@ -24,13 +26,10 @@ public class GameManager : MonoBehaviour
     public int keysCollected = 0;
 
     private bool isPaused = false;
-
-    // 이 스크립트의 싱글톤 인스턴스
     public static GameManager Instance;
 
     private void Awake()
     {
-        // GameManager의 싱글톤 인스턴스 설정
         if (Instance == null)
         {
             Instance = this;
@@ -40,63 +39,67 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        // 게임 시작 시 초기 상태 설정
         isGameOver = false;
         isPaused = false;
         Time.timeScale = 1f;
-        victoryUI.SetActive(false);
-        deadUI.SetActive(false);
-        if (pauseUI != null) pauseUI.SetActive(false);
 
-        // GameManager는 메인 메뉴에서도 사용되므로 게임 씬에서만 열쇠를 스폰
+        // === 모든 UI를 게임 시작 시 비활성화 ===
+        if (victoryUI != null) victoryUI.SetActive(false);
+        if (deadUI != null) deadUI.SetActive(false);
+        if (pauseUI != null) pauseUI.SetActive(false);
+        if (inGameSettingsUI != null) inGameSettingsUI.SetActive(false);
+        if (videoUI != null) videoUI.SetActive(false);
+        if (soundUI != null) soundUI.SetActive(false);
+
         if (SceneManager.GetActiveScene().name == "Game")
         {
             SpawnKeys();
         }
     }
 
-    // ESC 키 입력을 확인하는 Update 함수
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (isGameOver) return;
-            TogglePause();
-        }
-    }
-
-    public void StartGame()
-    {
-        SpawnKeys();
-    }
-
-    private void SpawnKeys()
-    {
-        List<Transform> spawnPointsList = keySpawnPoints.ToList();
-        List<Transform> selectedPoints = new List<Transform>();
-
-        for (int i = 0; i < KEYS_TO_SPAWN; i++)
-        {
-            if (spawnPointsList.Count > 0)
+            if (inGameSettingsUI != null && inGameSettingsUI.activeSelf)
             {
-                int randomIndex = Random.Range(0, spawnPointsList.Count);
-                selectedPoints.Add(spawnPointsList[randomIndex]);
-                spawnPointsList.RemoveAt(randomIndex);
+                OnBackButton();
+            }
+            else if (pauseUI != null && pauseUI.activeSelf)
+            {
+                TogglePause();
+            }
+            else
+            {
+                TogglePause();
             }
         }
+    }
 
-        foreach (Transform point in selectedPoints)
+    // === 게임 로직 관련 함수 ===
+    private void SpawnKeys()
+    {
+        GameObject[] existingKeys = GameObject.FindGameObjectsWithTag("Key");
+        foreach (GameObject key in existingKeys)
         {
-            Instantiate(keyPrefab, point.position, Quaternion.identity);
+            Destroy(key);
+        }
+
+        Transform[] shuffledSpawnPoints = keySpawnPoints.OrderBy(x => Random.value).ToArray();
+
+        for (int i = 0; i < KEYS_TO_SPAWN && i < shuffledSpawnPoints.Length; i++)
+        {
+            if (keyPrefab != null)
+            {
+                Instantiate(keyPrefab, shuffledSpawnPoints[i].position, Quaternion.identity);
+            }
         }
     }
 
     public void IncrementKeysCollected()
     {
-        if (isGameOver) return;
-
         keysCollected++;
-        Debug.Log($"열쇠 획득! 현재 개수: {keysCollected} / {KEYS_TO_SPAWN}");
+        Debug.Log("열쇠 획득! 현재 개수: " + keysCollected);
 
         if (keysCollected >= KEYS_TO_SPAWN)
         {
@@ -111,9 +114,8 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         Time.timeScale = 0f;
         deadUI.SetActive(true);
-        Debug.Log("게임 오버! AI에게 잡혔습니다.");
+        Debug.Log("게임 오버! 몬스터에게 잡혔습니다.");
 
-        // 마우스 커서를 보이게 하고 고정을 해제합니다.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
@@ -127,12 +129,11 @@ public class GameManager : MonoBehaviour
         victoryUI.SetActive(true);
         Debug.Log("축하합니다! 열쇠를 모두 모아 게임에서 승리했습니다!");
 
-        // 마우스 커서를 보이게 하고 고정을 해제합니다.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
 
-    // === 일시정지 관련 함수 ===
+    // === UI 관련 함수 ===
     public void TogglePause()
     {
         isPaused = !isPaused;
@@ -140,13 +141,6 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 0f;
             pauseUI.SetActive(true);
-
-            
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.PauseAllAudio();
-            }
-
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
         }
@@ -154,13 +148,6 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 1f;
             pauseUI.SetActive(false);
-
-            
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.ResumeAllAudio();
-            }
-
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
         }
@@ -173,18 +160,38 @@ public class GameManager : MonoBehaviour
 
     public void OnSettingsButton()
     {
-        Debug.Log("설정 UI로 이동");
+        pauseUI.SetActive(false);
+        inGameSettingsUI.SetActive(true);
     }
 
-    public void OnReturnButton()
+    public void OnBackButton()
+    {
+        inGameSettingsUI.SetActive(false);
+        pauseUI.SetActive(true);
+    }
+
+    public void OnVideoSettingsButton()
+    {
+        inGameSettingsUI.SetActive(false);
+        videoUI.SetActive(true);
+    }
+
+    public void OnSoundSettingsButton()
+    {
+        inGameSettingsUI.SetActive(false);
+        soundUI.SetActive(true);
+    }
+
+    public void OnSettingsSubMenuBackButton()
+    {
+        videoUI.SetActive(false);
+        soundUI.SetActive(false);
+        inGameSettingsUI.SetActive(true);
+    }
+
+    public void OnReturnToMainMenuButton()
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
-    }
-
-    public void OnRetryButton()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
