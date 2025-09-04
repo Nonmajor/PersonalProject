@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI; // 추가: UI 요소를 사용하기 위해 필요
 
 public class AudioManager : MonoBehaviour
 {
@@ -14,14 +15,28 @@ public class AudioManager : MonoBehaviour
     public AudioSource ingameMusicSource;
     public AudioSource chaseMusicSource;
 
-    // === 효과음(SFX)을 위한 오디오 소스 ===
     [Header("SFX")]
     public AudioSource flashlightSoundSource;
     public AudioSource footstepSoundSource;
 
-    // 각 오디오 소스의 원래 볼륨을 저장할 변수
+    // === 추가: 볼륨 조절 슬라이더 변수 ===
+    [Header("Volume Sliders")]
+    public Slider mainVolumeSlider;
+    public Slider musicVolumeSlider;
+    public Slider effectVolumeSlider;
+
+
+    // 원래 볼륨을 저장할 변수들
+    private float mainMusicOriginalVolume;
     private float ingameMusicOriginalVolume;
     private float chaseMusicOriginalVolume;
+    private float flashlightOriginalVolume;
+    private float footstepOriginalVolume;
+
+    // 현재 볼륨 상태를 저장할 변수
+    private float mainVolume = 1.0f;
+    private float musicVolume = 1.0f;
+    private float effectVolume = 1.0f;
 
     private void Awake()
     {
@@ -36,14 +51,38 @@ public class AudioManager : MonoBehaviour
             Destroy(gameObject);
         }
 
+        // Awake()에서 모든 AudioSource의 볼륨을 1로 강제 설정 후, 원래 볼륨 값 저장
+        if (mainMusicSource != null)
+        {
+            mainMusicSource.volume = 1.0f;
+            mainMusicOriginalVolume = mainMusicSource.volume;
+        }
         if (ingameMusicSource != null)
         {
+            ingameMusicSource.volume = 1.0f;
             ingameMusicOriginalVolume = ingameMusicSource.volume;
         }
         if (chaseMusicSource != null)
         {
+            chaseMusicSource.volume = 1.0f;
             chaseMusicOriginalVolume = chaseMusicSource.volume;
         }
+        if (flashlightSoundSource != null)
+        {
+            flashlightSoundSource.volume = 1.0f;
+            flashlightOriginalVolume = flashlightSoundSource.volume;
+        }
+        if (footstepSoundSource != null)
+        {
+            footstepSoundSource.volume = 1.0f;
+            footstepOriginalVolume = footstepSoundSource.volume;
+        }
+    }
+
+
+    private void Update()
+    {
+        UpdateAllVolumes();
     }
 
     private void OnDestroy()
@@ -65,9 +104,10 @@ public class AudioManager : MonoBehaviour
         {
             StopAllMusic();
         }
+
+        UpdateAllVolumes();
     }
 
-    // 모든 음악을 정지
     private void StopAllMusic()
     {
         if (mainMusicSource != null) mainMusicSource.Stop();
@@ -75,7 +115,6 @@ public class AudioManager : MonoBehaviour
         if (chaseMusicSource != null) chaseMusicSource.Stop();
     }
 
-    // 메인 메뉴 음악 재생
     public void PlayMainMusic()
     {
         StopAllMusic();
@@ -85,7 +124,6 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // 인게임 음악 재생
     public void PlayIngameMusic()
     {
         StopAllMusic();
@@ -106,7 +144,6 @@ public class AudioManager : MonoBehaviour
 
     public void StopChaseMusic()
     {
-        // 추격 음악을 5초에 걸쳐 페이드아웃
         StartCoroutine(StopChaseMusicWithFade(5f, 10f));
     }
 
@@ -118,7 +155,6 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // === 발소리 재생 및 정지 함수 ===
     public void PlayFootstepSound()
     {
         if (footstepSoundSource != null && footstepSoundSource.clip != null)
@@ -127,17 +163,15 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // === 모든 음악 및 효과음을 일시 정지하는 함수 ===
     public void PauseAllAudio()
     {
-        if (mainMusicSource != null && mainMusicSource.isPlaying) mainMusicSource.Pause();
-        if (ingameMusicSource != null && ingameMusicSource.isPlaying) ingameMusicSource.Pause();
-        if (chaseMusicSource != null && chaseMusicSource.isPlaying) chaseMusicSource.Pause();
-        if (flashlightSoundSource != null && flashlightSoundSource.isPlaying) flashlightSoundSource.Pause();
-        if (footstepSoundSource != null && footstepSoundSource.isPlaying) footstepSoundSource.Pause();
+        if (mainMusicSource != null) mainMusicSource.Pause();
+        if (ingameMusicSource != null) ingameMusicSource.Pause();
+        if (chaseMusicSource != null) chaseMusicSource.Pause();
+        if (flashlightSoundSource != null) flashlightSoundSource.Pause();
+        if (footstepSoundSource != null) footstepSoundSource.Pause();
     }
 
-    // === 일시 정지된 모든 음악 및 효과음을 다시 재생하는 함수 ===
     public void ResumeAllAudio()
     {
         if (mainMusicSource != null) mainMusicSource.UnPause();
@@ -147,28 +181,50 @@ public class AudioManager : MonoBehaviour
         if (footstepSoundSource != null) footstepSoundSource.UnPause();
     }
 
-    // === 코루틴 ===
-    private IEnumerator StopChaseMusicWithFade(float fadeOutDuration, float delayDuration)
+    public void SetMainVolume(float volume)
     {
-        // 추격 음악을 5초 동안 페이드아웃
-        yield return StartCoroutine(FadeOut(chaseMusicSource, fadeOutDuration));
-
-        // 10초 동안 대기
-        yield return new WaitForSeconds(delayDuration);
-
-        // 게임 내 음악 페이드인
-        PlayIngameMusic();
+        mainVolume = volume;
+        UpdateAllVolumes();
     }
 
-    private IEnumerator FadeOut(AudioSource audioSource, float fadeDuration)
+    public void SetMusicVolume(float volume)
     {
-        float startVolume = audioSource.volume;
-        while (audioSource.volume > 0)
+        musicVolume = volume;
+        UpdateAllVolumes();
+    }
+
+    public void SetEffectVolume(float volume)
+    {
+        effectVolume = volume;
+        UpdateAllVolumes();
+    }
+
+    private void UpdateAllVolumes()
+    {
+        // 슬라이더가 연결되어 있으면 값을 가져오고, 아니면 기본값(1.0f) 사용
+        float currentMainVolume = (mainVolumeSlider != null) ? mainVolumeSlider.value : 1.0f;
+        float currentMusicVolume = (musicVolumeSlider != null) ? musicVolumeSlider.value : 1.0f;
+        float currentEffectVolume = (effectVolumeSlider != null) ? effectVolumeSlider.value : 1.0f;
+
+        if (mainMusicSource != null) mainMusicSource.volume = mainMusicOriginalVolume * currentMainVolume * currentMusicVolume;
+        if (ingameMusicSource != null) ingameMusicSource.volume = ingameMusicOriginalVolume * currentMainVolume * currentMusicVolume;
+        if (chaseMusicSource != null) chaseMusicSource.volume = chaseMusicOriginalVolume * currentMainVolume * currentMusicVolume;
+
+        if (flashlightSoundSource != null) flashlightSoundSource.volume = flashlightOriginalVolume * currentMainVolume * currentEffectVolume;
+        if (footstepSoundSource != null) footstepSoundSource.volume = footstepOriginalVolume * footstepOriginalVolume * currentMainVolume * currentEffectVolume;
+    }
+
+    private IEnumerator StopChaseMusicWithFade(float fadeOutDuration, float delayDuration)
+    {
+        float startVolume = chaseMusicSource.volume;
+        while (chaseMusicSource.volume > 0)
         {
-            audioSource.volume -= startVolume * Time.deltaTime / fadeDuration;
+            chaseMusicSource.volume -= startVolume * Time.deltaTime / fadeOutDuration;
             yield return null;
         }
-        audioSource.Stop();
-        audioSource.volume = startVolume; // 원래 볼륨으로 되돌림
+        chaseMusicSource.Stop();
+        chaseMusicSource.volume = chaseMusicOriginalVolume * mainVolume * musicVolume;
+        yield return new WaitForSeconds(delayDuration);
+        PlayIngameMusic();
     }
 }
