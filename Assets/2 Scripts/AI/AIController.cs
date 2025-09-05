@@ -17,6 +17,12 @@ public class AIController : MonoBehaviour
     // AI가 플레이어를 마지막으로 본 위치를 저장
     [HideInInspector] public Vector3 lastKnownPlayerPosition;
 
+    [Header("AI States")]
+    public AIPatrolState patrolState;
+    public AIChaseState chaseState;
+    public AIAlertState alertState;
+    public AITimeMoveState timeMoveState;
+
 
     [Header("Vision")]
     public float visionRange = 10f; // AI의 시야(감지) 범위
@@ -46,11 +52,12 @@ public class AIController : MonoBehaviour
 
     [Header("Move")]
     public float moveSpeed = 4f; // 이동 상태의 이동 속도
+    public float timedMoveInterval = 5f; // 일정 시간 이동의 주기
 
 
     private void Awake()
     {
-        // 수정된 부분: Awake()에서 필수 컴포넌트들을 가져와 변수에 할당
+        // Awake()에서 필수 컴포넌트들을 가져와 변수에 할당
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
 
@@ -68,6 +75,39 @@ public class AIController : MonoBehaviour
         }
 
         alertCheckTimer = alertCheckInterval;
+
+        // 상태 머신을 초기화합니다.
+        stateMachine = GetComponent<AIStateMachine>();
+        if (stateMachine == null)
+        {
+            stateMachine = gameObject.AddComponent<AIStateMachine>();
+        }
+    }
+
+    private void Start()
+    {
+        // Start()에서 상태 머신을 초기화하고 첫 상태를 설정합니다.
+        if (stateMachine != null)
+        {
+            stateMachine.controller = this;
+            stateMachine.PatrolState = new AIPatrolState(stateMachine);
+            stateMachine.ChaseState = new AIChaseState(stateMachine);
+            stateMachine.AlertState = new AIAlertState(stateMachine);
+            stateMachine.TimeMoveState = new AITimeMoveState(stateMachine);
+
+            // 초기 상태 설정
+            stateMachine.SwitchState(stateMachine.PatrolState);
+        }
+    }
+
+
+    private void Update()
+    {
+        // 매 프레임마다 현재 상태의 Update 함수를 호출합니다.
+        if (stateMachine != null && stateMachine.currentState != null)
+        {
+            stateMachine.currentState.OnUpdate();
+        }
     }
 
 
@@ -114,7 +154,11 @@ public class AIController : MonoBehaviour
         {
             Debug.Log("AI가 플레이어와 충돌했습니다. 게임 오버!");
             // GameManager 싱글톤 인스턴스를 통해 DieGame() 메서드 호출
-            GameManager.Instance.Die();
+            // GameManager.Instance가 null이 아닐 때만 Die() 함수를 호출합니다.
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.Die();
+            }
         }
     }
 

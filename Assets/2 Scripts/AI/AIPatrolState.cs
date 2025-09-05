@@ -11,20 +11,24 @@ public class AIPatrolState : AIState
     // 새로운 목표 지점을 설정할 타이머
     private float newTargetTimer;
 
+    // AITimeMoveState로 전환할 타이머
+    private float timedMoveTimer;
+
     // 새로운 목표를 설정할 대기 시간 (5초)
     private const float newTargetDelay = 5.0f;
 
     public AIPatrolState(AIStateMachine stateMachine) : base(stateMachine) { }
 
 
-    
+
     public override void OnEnter()
     {
         Debug.Log("Patrol 상태 진입");
         stateMachine.controller.agent.speed = stateMachine.controller.patrolSpeed;
         newTargetTimer = newTargetDelay;
+        timedMoveTimer = stateMachine.controller.timedMoveInterval; // 타이머 초기화
         stateMachine.controller.agent.isStopped = false;
-        stateMachine.controller.SetPatrolAnimation(); // 수정된 부분
+        stateMachine.controller.SetPatrolAnimation();
     }
 
     public override void OnExit()
@@ -32,7 +36,7 @@ public class AIPatrolState : AIState
         Debug.Log("Patrol 상태 종료");
     }
 
-    
+
     public override void OnUpdate()
     {
 
@@ -40,20 +44,21 @@ public class AIPatrolState : AIState
         // 플레이어가 시야 범위 내에 들어왔는지 확인
         if (stateMachine.controller.IsPlayerInVision())
         {
-            // ⭐ 추가된 부분: 플레이어를 마지막으로 본 위치를 저장
+            // 플레이어를 마지막으로 본 위치를 저장
             stateMachine.controller.lastKnownPlayerPosition = stateMachine.controller.playerTransform.position;
             stateMachine.SwitchState(stateMachine.ChaseState);
             return;
         }
 
-        // 2. 정기적으로 경계 상태로 전환
-        stateMachine.controller.alertCheckTimer -= Time.deltaTime;
-        if (stateMachine.controller.alertCheckTimer <= 0)
+        // 2. 일정 시간마다 AITimeMoveState로 전환
+        timedMoveTimer -= Time.deltaTime;
+        if (timedMoveTimer <= 0)
         {
-            stateMachine.SwitchState(stateMachine.AlertState);
-            stateMachine.controller.alertCheckTimer = stateMachine.controller.alertCheckInterval; // 타이머 재설정
+            stateMachine.SwitchState(stateMachine.TimeMoveState);
+            timedMoveTimer = stateMachine.controller.timedMoveInterval; // 타이머 재설정
             return;
         }
+
 
         // 3. 목표 지점에 도착했거나, 일정 시간이 지났으면 새로운 목표를 설정.
         if (stateMachine.controller.agent.remainingDistance <= stateMachine.controller.agent.stoppingDistance || newTargetTimer <= 0)
@@ -61,6 +66,9 @@ public class AIPatrolState : AIState
             SetNewPatrolTarget();
             newTargetTimer = newTargetDelay; // 타이머 재설정
         }
+
+        // 4. 새로운 목표를 설정할 타이머 감소
+        newTargetTimer -= Time.deltaTime;
     }
 
     // 물리 업데이트는 NavMeshAgent에 맡기므로 공백
@@ -77,8 +85,7 @@ public class AIPatrolState : AIState
         // NavMesh 위에서 유효한 위치를 찾아 AI의 목적지로 설정
         if (NavMesh.SamplePosition(randomDirection, out hit, stateMachine.controller.patrolRadius, NavMesh.AllAreas))
         {
-            patrolTarget = hit.position;
-            stateMachine.controller.MoveTo(patrolTarget);
+            stateMachine.controller.MoveTo(hit.position);
         }
     }
 }

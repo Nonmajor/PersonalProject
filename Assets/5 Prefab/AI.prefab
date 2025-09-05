@@ -1075,10 +1075,10 @@ MonoBehaviour:
   pursuitTimer: 0
   patrolSpeed: 5
   patrolRadius: 50
-  alertCheckInterval: 20
+  alertCheckInterval: 70
   alertCheckTimer: 0
   patrolAnimSpeed: 1.5
-  alertRotationSpeed: 30
+  alertRotationSpeed: 50
   alertDuration: 5
   alertAnimSpeed: 1.5
   chaseSpeed: 10

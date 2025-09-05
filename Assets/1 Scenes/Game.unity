@@ -5514,7 +5514,7 @@ MonoBehaviour:
   runFootstepInterval: 0.2
   canPlayFootstep: 1
   walkSpeed: 6
-  runSpeed: 20
+  runSpeed: 10
   moveSpeed: 0
   moveInput: {x: 0, y: 0}
   isBoosterActive: 0
@@ -12079,7 +12079,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 27.299988, y: -12.599976}
+  m_AnchoredPosition: {x: 27.300049, y: -12.599976}
   m_SizeDelta: {x: 400, y: 100}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1632193970
@@ -17354,6 +17354,14 @@ PrefabInstance:
     - target: {fileID: 2842591088347134255, guid: 1b61cba3710dcb646b68379b738c4205, type: 3}
       propertyPath: m_LocalPosition.y
       value: 1.589
+      objectReference: {fileID: 0}
+    - target: {fileID: 6885848375348646371, guid: 1b61cba3710dcb646b68379b738c4205, type: 3}
+      propertyPath: timedMoveInterval
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 6885848375348646371, guid: 1b61cba3710dcb646b68379b738c4205, type: 3}
+      propertyPath: alertCheckInterval
+      value: 70
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

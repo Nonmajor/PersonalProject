@@ -11,64 +11,55 @@ public class AIStateMachine : MonoBehaviour
     public AIPatrolState PatrolState;
     public AIChaseState ChaseState;
     public AIAlertState AlertState;
-    public AIState TimedMoveState;
-
+    public AITimeMoveState TimeMoveState;
 
     // AI의 기능과 데이터를 담고 있는 컨트롤러에 대한 참조
     [HideInInspector] public AIController controller;
 
-   
     private void Awake()
-    {
-        // 동일 오브젝트에 있는 AIController 컴포넌트를 가져옴
-        controller = GetComponent<AIController>();
-
-
-        // 각 상태 클래스의 인스턴스를 생성하고 상태 머신에 대한 참조를 전달
-        PatrolState = new AIPatrolState(this);
-        ChaseState = new AIChaseState(this);
-        AlertState = new AIAlertState(this);
-        TimedMoveState = new AITimeMoveState(this);
-
-    }
-
-    
-    private void Start()
     {
         // 게임 시작 시 TimeScale을 1로 초기화하여 시간이 흐르게 함
         Time.timeScale = 1f;
-
-        // AI의 초기 상태를 순찰(Patrol) 상태로 설정
-        SwitchState(PatrolState);
     }
 
+
+    // AIStateMachine을 초기화하는 메서드 (AIController에서 호출)
+    public void Initialize(AIState startingState)
+    {
+        PatrolState = new AIPatrolState(this);
+        ChaseState = new AIChaseState(this);
+        AlertState = new AIAlertState(this);
+        TimeMoveState = new AITimeMoveState(this);
+
+        // AI의 초기 상태를 설정
+        SwitchState(startingState);
+    }
 
     private void Update()
     {
         // 현재 상태의 OnUpdate() 함수를 호출하여 상태별 로직을 실행
         currentState?.OnUpdate();
-
-        
     }
 
 
     private void FixedUpdate()
     {
-        // 현재 상태의 OnFixedUpdate() 함수를 호출
+        // 현재 상태의 OnFixedUpdate() 함수를 호출하여 상태별 물리 로직을 실행
         currentState?.OnFixedUpdate();
     }
 
 
-    // 새로운 상태로 전환하는 핵심 함수
+    // 새로운 상태로 전환하는 메서드
     public void SwitchState(AIState newState)
     {
-        // 현재 상태가 있다면, 해당 상태의 OnExit() 함수를 호출하여 상태를 종료
-        currentState?.OnExit();
+        if (currentState != null)
+        {
+            // 현재 상태의 OnExit() 함수 호출
+            currentState.OnExit();
+        }
 
-        // 현재 상태를 새로운 상태로 교체
+        // 새 상태로 전환하고 OnEnter() 함수 호출
         currentState = newState;
-
-        // 새로운 상태의 OnEnter() 함수를 호출하여 상태를 시작
-        currentState?.OnEnter();
+        currentState.OnEnter();
     }
 }
