@@ -137,6 +137,7 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         Time.timeScale = 0f;          // 게임 시간 정지
         deadUI.SetActive(true);       // 게임 오버 UI 활성화
+        AudioManager.Instance.PauseAllAudio();
         Debug.Log("게임 오버! 몬스터에게 잡혔습니다.");
 
         Cursor.visible = true;
@@ -151,6 +152,7 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         Time.timeScale = 0f;
         victoryUI.SetActive(true);
+        AudioManager.Instance.PauseAllAudio();
         Debug.Log("축하합니다! 열쇠를 모두 모아 게임에서 승리했습니다!");
 
         Cursor.visible = true;
@@ -166,6 +168,13 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 0f;
             pauseUI.SetActive(true);
+
+            // AudioManager에 오디오를 일시정지하도록 명령
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PauseAllAudio();
+            }
+
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
         }
@@ -173,6 +182,13 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 1f;
             pauseUI.SetActive(false);
+
+            // AudioManager에 오디오를 다시 재생하도록 명령
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.ResumeAllAudio();
+            }
+
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
         }
@@ -252,10 +268,13 @@ public class GameManager : MonoBehaviour
     {
         Screen.SetResolution(1280, 720, Screen.fullScreen);
     }
-
     // === 전체화면/창모드 토글 기능 ===
     public void ToggleFullscreen()
+
     {
+
         Screen.fullScreen = !Screen.fullScreen;
+
     }
 }
+    
